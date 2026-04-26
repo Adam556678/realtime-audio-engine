@@ -13,7 +13,7 @@ class Decoder{
     public:
         Decoder();
         float* decodeMp3(const char* filePath);
-        float* decodeWAV(const std::string filePath);
+        float* decodeWAV(const char* filePath);
 
         AudioData getAudioData();
 
