@@ -7,20 +7,18 @@
 #include <iostream>
 #include <string>
 #include "dr_mp3.h"
+#include <AudioData.h>
 
 class Decoder{
     public:
         Decoder();
-        float* decodeMp3(std::string filePath);
-        float* decodeWAV(std::string filePath);
+        float* decodeMp3(const char* filePath);
+        float* decodeWAV(const std::string filePath);
 
-        drmp3_uint32 getChannles();
-        drmp3_uint32 getSampleRate();
-        drmp3_uint32 getTotalFrameCount();
+        AudioData getAudioData();
 
     private:
-        drmp3_config config;
-        drmp3_uint64 totalFrameCount;
+        AudioData audioData;
 };
 
 #endif

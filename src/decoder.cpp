@@ -4,27 +4,35 @@ Decoder::Decoder()
 {
 }
 
-float *Decoder::decodeMp3(std::string filePath)
+float *Decoder::decodeMp3(const char* filePath)
+{
+
+    drmp3_config config;
+    drmp3_uint64 totalFrameCount;
+
+    float* pcm = drmp3_open_file_and_read_pcm_frames_f32(
+        filePath,
+        &config,
+        &totalFrameCount,
+        NULL
+    );
+
+    if (!pcm){
+        throw std::runtime_error("Failed to decode MP3 file.");
+    }
+
+    this->audioData = AudioData(config.channels, config.sampleRate, totalFrameCount);
+
+    return pcm;
+}
+
+float *Decoder::decodeWAV(const std::string filePath)
 {
     return nullptr;
 }
 
-float *Decoder::decodeWAV(std::string filePath)
+AudioData Decoder::getAudioData()
 {
-    return nullptr;
+    return this->audioData;
 }
 
-drmp3_uint32 Decoder::getChannles()
-{
-    return drmp3_uint32();
-}
-
-drmp3_uint32 Decoder::getSampleRate()
-{
-    return drmp3_uint32();
-}
-
-drmp3_uint32 Decoder::getTotalFrameCount()
-{
-    return drmp3_uint32();
-}
