@@ -39,3 +39,9 @@
 
 # debug information files
 *.dwo
+
+# Audio files
+*.mp3
+*.wav
+
+compile.txt

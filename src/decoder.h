@@ -6,8 +6,8 @@
 
 #include <iostream>
 #include <string>
-#include "dr_mp3.h"
-#include <AudioData.h>
+#include "../include/dr_mp3.h"
+#include "../include/AudioData.h"
 
 class Decoder{
     public:

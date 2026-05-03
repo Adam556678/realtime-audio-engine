@@ -2,8 +2,12 @@
 // Decoder for converting audio files (MP3 & WAV) to PCM samples
 // Author: Mahmoud Ramadan
 
+#define DR_MP3_IMPLEMENTATION
+#define DR_WAV_IMPLEMENTATION
+
 #include "decoder.h"
-#include <dr_wav.h>
+#include "../include/dr_mp3.h"
+#include "../include/dr_wav.h"
 
 Decoder::Decoder()
 {
