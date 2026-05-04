@@ -12,15 +12,16 @@ class RingBuffer
     private:    
         std::vector<float> data;
         
-        int size;
-        int lastInsert;
-        int nextRead;
+        size_t size;
+        size_t insertPos;
+        size_t readPos;
+        size_t count;
 
     public:    
         RingBuffer(int size);
 
-        bool push(float sample);
-        bool pop();
+        bool push(const float* input, size_t samples);
+        bool pop(float* output, size_t samples);
 
         bool empty() const;
         bool full() const;
