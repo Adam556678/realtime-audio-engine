@@ -65,8 +65,39 @@ float *Decoder::decodeWAV(const char* filePath)
     return pcm;
 }
 
+drmp3_uint64 Decoder::decodeMp3Chunk(float* output, size_t frames)
+{
+    return drmp3_read_pcm_frames_f32(
+        &mp3,
+        frames,
+        output
+    );
+}
+
+void Decoder::decodeWAVChunk(float *output, size_t frames)
+{
+}
+
+
 AudioData Decoder::getAudioData()
 {
     return this->audioData;
 }
 
+bool Decoder::openMp3(const char *path)
+{
+    if (!drmp3_init_file(&mp3, path, NULL))
+    return false;
+    
+    return true;
+}
+
+bool Decoder::openWAV(const char *path)
+{
+    return false;
+}
+
+void Decoder::close()
+{
+    drmp3_uninit(&mp3);
+}
