@@ -19,7 +19,7 @@ class Decoder{
         float* decodeMp3(const char* filePath);
         float* decodeWAV(const char* filePath);
         drmp3_uint64 decodeMp3Chunk(float* output, size_t frames);
-        void decodeWAVChunk(float* output, size_t frames);
+        drwav_uint64 decodeWAVChunk(float* output, size_t frames);
         
         void close();
 
