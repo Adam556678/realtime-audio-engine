@@ -1,6 +1,7 @@
 // Circular Buffer data structure for storing PCM samples
 // Author: Mahmoud Ramadan
 
+#include <iostream>
 #include "ring_buffer.h"
 
 RingBuffer::RingBuffer(int size) : 
@@ -14,6 +15,9 @@ bool RingBuffer::push(const float* input, size_t samples)
     // Prevent overwriting unread samples
     if (samples > (size - count))
         return false;
+
+    // DEBUG
+    std::cout << "---> BUFFER: " << samples << " samples are pushed"<< std::endl;
     
     for (size_t i = 0; i < samples; i++)
     {

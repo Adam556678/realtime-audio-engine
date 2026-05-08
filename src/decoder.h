@@ -7,6 +7,7 @@
 #include <iostream>
 #include <string>
 #include "../include/dr_mp3.h"
+#include "../include/dr_wav.h"
 #include "../include/AudioData.h"
 
 class Decoder{
