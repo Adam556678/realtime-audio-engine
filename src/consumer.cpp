@@ -14,6 +14,7 @@ struct WasapiContext {
     IAudioClient* audioClient;
     IAudioRenderClient* renderClient;
     UINT32 bufferFrames;
+    HANDLE event;
 };
 
 void consume(RingBuffer* buffer){
@@ -42,6 +43,13 @@ void consume(RingBuffer* buffer){
     // Play....
     while (true)
     {
+
+        // Pause this thread untill event fires
+        WaitForSingleObject(
+            context.event, // Event to wait for
+            INFINITE // wait forever
+        );
+
         // get current padding in the buffer
         UINT32 padding;
         hr = audioClient->GetCurrentPadding(&padding);
@@ -145,10 +153,18 @@ HRESULT config_wasapi(WasapiContext &context){
     WAVEFORMATEX* format = nullptr;
     audioClient->GetMixFormat(&format);
 
+    // Create windows event object
+    HANDLE event = CreateEvent(
+        nullptr, // who is allowed to access the event (default security)
+        FALSE, // Auto reset event
+        FALSE,
+        nullptr // Event name
+    );
+
     hr = audioClient->Initialize(
         AUDCLNT_SHAREMODE_SHARED, // mix all sounds together
-        0, //No flags
-        200000, // the amount of time the buffer should be able to hold.
+        AUDCLNT_STREAMFLAGS_EVENTCALLBACK, //Notify me whenever you need more audio
+        200000, // the amount of time the buffer should be able to hold (20ms).
         0, // Only important in Exclusive Mode
         format,
         nullptr
@@ -162,6 +178,19 @@ HRESULT config_wasapi(WasapiContext &context){
         CoUninitialize();
         return hr;
     }
+    
+    // Set event handle
+    hr = audioClient->SetEventHandle(event);
+
+    if (FAILED(hr))
+    {
+        std::cerr << "Setting event handle failed\n";
+        CoTaskMemFree(format);
+        audioClient->Release();
+        CoUninitialize();
+        return hr;
+    }
+
 
     // We don't need the format structure anymore.
     CoTaskMemFree(format);
@@ -189,6 +218,12 @@ HRESULT config_wasapi(WasapiContext &context){
         std::cerr << "GetBufferSize failed\n";
         return hr;
     }
+
+    // Assign values to context
+    context.audioClient = audioClient;
+    context.bufferFrames = bufferFrames;
+    context.renderClient = renderClient;
+    context.event = event;
 
     return hr;
 }
