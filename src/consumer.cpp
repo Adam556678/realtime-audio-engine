@@ -1,4 +1,5 @@
 #include "consumer.h"
+#include "constants.h"
 
 #include <thread>
 #include <iostream>
@@ -9,12 +10,86 @@
 #include <functiondiscoverykeys_devpkey.h>
 #include <combaseapi.h>
 
+struct WasapiContext {
+    IAudioClient* audioClient;
+    IAudioRenderClient* renderClient;
+    UINT32 bufferFrames;
+};
+
 void consume(RingBuffer* buffer){
-    HRESULT hr = CoInitialize(nullptr);
+    HRESULT hr;
+   
+    // Configure WASAPI
+    WasapiContext context = WasapiContext();
+    hr = config_wasapi(context);
+    
+    if (FAILED(hr))
+    {
+        std::cerr << "WASAPI configuration failed\n";
+        return ;
+    }
+
+    // Start playback
+    IAudioClient* audioClient = context.audioClient; 
+    hr = audioClient->Start();
+    
+    if (FAILED(hr))
+    {
+        std::cerr << "audio client start failed\n";
+        return ;
+    }
+    
+    // Play....
+    while (true)
+    {
+        // get current padding in the buffer
+        UINT32 padding;
+        hr = audioClient->GetCurrentPadding(&padding);
+
+        if (FAILED(hr))
+        {
+            std::cerr << "Getting buffer's padding failed\n";
+            return ;
+        }
+        
+        // Get available size in output's buffer
+        UINT32 available = context.bufferFrames - padding;
+        if (available == 0){
+            // wait for the buffer to free space
+            Sleep(1); 
+            continue;
+        }
+        
+        // get access to the speaker/headphone buffer
+        IAudioRenderClient* renderClient = context.renderClient;
+        BYTE* data = nullptr;
+        hr = renderClient->GetBuffer(available, &data);
+        
+        if (FAILED(hr))
+        {
+            std::cerr << "Accessing to output's buffer failed\n";
+            return ;
+        }
+
+        // pop from the engine buffer to the window's buffer
+        buffer->pop(
+            reinterpret_cast<float*>(data), 
+            available * constants::CHANNELS
+        );
+
+        // Finish writing to the buffer
+        renderClient->ReleaseBuffer(available, 0);
+    }
+    
+    
+}
+
+HRESULT config_wasapi(WasapiContext &context){
+     HRESULT hr = CoInitialize(nullptr);
 
     if (FAILED(hr)){
         std::cerr <<"CoInitialize failed\n";
-        return;
+        return hr;
     }
     
     IMMDeviceEnumerator* enumerator = nullptr;
@@ -30,7 +105,7 @@ void consume(RingBuffer* buffer){
     if (FAILED(hr)){
         std::cerr <<"CoCreateInstance failed\n";
         CoUninitialize();
-        return;
+        return hr;
     }
 
     IMMDevice* device = nullptr;
@@ -44,7 +119,7 @@ void consume(RingBuffer* buffer){
 
     if (FAILED(hr)){
         std::cerr <<"Enumerator failed\n";
-        return;
+        return hr;
     }
 
     enumerator->Release();
@@ -59,7 +134,7 @@ void consume(RingBuffer* buffer){
 
     if (FAILED(hr)){
         std::cerr <<"Activate failed\n";
-        return;
+        return hr;
     }
 
     device->Release();
@@ -85,7 +160,7 @@ void consume(RingBuffer* buffer){
         CoTaskMemFree(format);
         audioClient->Release();
         CoUninitialize();
-        return;
+        return hr;
     }
 
     // We don't need the format structure anymore.
@@ -103,7 +178,7 @@ void consume(RingBuffer* buffer){
         std::cerr << "GetService failed\n";
         audioClient->Release();
         CoUninitialize();
-        return;
+        return hr;
     }
 
     UINT32 bufferFrames = 0;
@@ -112,7 +187,8 @@ void consume(RingBuffer* buffer){
     if (FAILED(hr))
     {
         std::cerr << "GetBufferSize failed\n";
+        return hr;
     }
 
-    
+    return hr;
 }
