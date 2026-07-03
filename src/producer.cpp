@@ -1,10 +1,15 @@
 #include "producer.h"
 #include "constants.h"
+#include "include/PlaybackState.h"
 #include <chrono>
 #include <thread>
 #include <iostream>
 
-void producer(Decoder* decoder, RingBuffer* buffer)
+void producer(
+    Decoder* decoder, 
+    RingBuffer* buffer,
+    PlaybackState* state
+)
 {
     {
         float bucket[constants::BUCKET_SIZE]; // A temporary buffer for chunk decoding
@@ -21,9 +26,10 @@ void producer(Decoder* decoder, RingBuffer* buffer)
             // DEBUG
             std::cout << "---> BUCKET: " << framesDecoded * constants::CHANNELS << " samples filled" << std::endl;
             
-            if (framesDecoded == 0) // end of file
+            if (framesDecoded == 0){ // end of file
+                state->finished = true;
                 break;
-            
+            }
             while (!buffer->push(
                 bucket, 
                 framesDecoded * constants::CHANNELS

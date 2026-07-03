@@ -1,5 +1,6 @@
 #include "consumer.h"
 #include "constants.h"
+#include "include/PlaybackState.h"
 
 #include <thread>
 #include <iostream>
@@ -17,7 +18,7 @@ struct WasapiContext {
     HANDLE event;
 };
 
-void consume(RingBuffer* buffer){
+void consume(RingBuffer* buffer, PlaybackState* state){
     HRESULT hr;
    
     // Configure WASAPI
@@ -41,7 +42,7 @@ void consume(RingBuffer* buffer){
     }
     
     // Play....
-    while (true)
+    while (!state->finished)
     {
 
         // Pause this thread untill event fires
@@ -88,7 +89,6 @@ void consume(RingBuffer* buffer){
         // Finish writing to the buffer
         renderClient->ReleaseBuffer(available, 0);
     }
-    
     
 }
 
