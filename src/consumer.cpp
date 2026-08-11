@@ -42,10 +42,11 @@ void consume(RingBuffer* buffer, PlaybackState* state){
     }
     
     // Play....
-    while (!state->finished)
+    while (!state->finished || !buffer->empty())
     {
 
         // Pause this thread untill event fires
+        // Wake this thread when there's free space in the buffer
         WaitForSingleObject(
             context.event, // Event to wait for
             INFINITE // wait forever
@@ -64,11 +65,9 @@ void consume(RingBuffer* buffer, PlaybackState* state){
         // Get available size in output's buffer
         UINT32 available = context.bufferFrames - padding;
         if (available == 0){
-            // wait for the buffer to free space
-            Sleep(1); 
             continue;
         }
-        
+
         // get access to the speaker/headphone buffer
         IAudioRenderClient* renderClient = context.renderClient;
         BYTE* data = nullptr;
