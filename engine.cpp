@@ -7,6 +7,7 @@
 #include "src/consumer.h"
 #include <string>
 #include <thread>
+#include <iostream>
 
 int main(){
 
@@ -16,7 +17,11 @@ int main(){
     RingBuffer buffer(constants::BUFFER_FRAMES * constants::CHANNELS); // Circular buffer
     
     // Open audio file
-    decoder.openMp3(filePath.c_str());
+    if (!decoder.openMp3(filePath.c_str())){
+        std::cerr << "Failed to open file";
+        return 1;
+    }
+    
 
     // Create a shared playback state between producer & consumer
     PlaybackState state;

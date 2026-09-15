@@ -57,3 +57,8 @@ bool RingBuffer::full() const
 {
     return count == size;
 }
+
+size_t RingBuffer::getAvailableSamples() const
+{
+    return count;
+}

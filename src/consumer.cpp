@@ -2,8 +2,10 @@
 #include "constants.h"
 #include "include/PlaybackState.h"
 
+#include <algorithm>
 #include <thread>
 #include <iostream>
+#define NOMINMAX
 #include <windows.h>
 #include <mmdeviceapi.h>
 #include <audioclient.h>
@@ -79,14 +81,39 @@ void consume(RingBuffer* buffer, PlaybackState* state){
             return ;
         }
 
-        // pop from the engine buffer to the window's buffer
-        buffer->pop(
-            reinterpret_cast<float*>(data), 
-            available * constants::CHANNELS
-        );
+        // get the number of samples needed
+        size_t samplesNeeded = 
+            available * constants::CHANNELS;
+        
+        // get the number of available samples in the ring buffer
+        size_t availableSamples = 
+            buffer->getAvailableSamples();
 
-        // Finish writing to the buffer
+        size_t samplesToCopy = 
+            std::min(availableSamples, samplesNeeded);
+
+        // pop from the engine buffer to the window's buffer
+        if (samplesToCopy > 0)
+        {
+            buffer->pop(
+                reinterpret_cast<float*>(data),
+                samplesToCopy
+            );
+        }
+
+        // Fill the rest with silence
+        if (samplesToCopy < samplesNeeded)
+        {
+            std::memset(
+                reinterpret_cast<float*>(data) + samplesToCopy,
+                0,
+                (samplesNeeded - samplesToCopy) * sizeof(float)
+            );
+        }
+
+        // Commit the complete WASAPI buffer
         renderClient->ReleaseBuffer(available, 0);
+
     }
     
 }

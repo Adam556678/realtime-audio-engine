@@ -25,6 +25,8 @@ class RingBuffer
 
         bool empty() const;
         bool full() const;
+
+        size_t getAvailableSamples() const;
         
 };    
 

@@ -39,9 +39,9 @@ void producer(
                 // DEBUG
                 std::cout << "---> BUFFER: " << "Buffer is full, waiting for consuming..."<< std::endl;
 
-                 std::this_thread::sleep_for(
+                std::this_thread::sleep_for(
                     std::chrono::milliseconds(1)
-                 );
+                );
             }
         }
     }
