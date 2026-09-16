@@ -6,6 +6,7 @@
 
 #include <vector>
 #include <ctime>
+#include <mutex>
 
 class RingBuffer
 {
@@ -16,6 +17,8 @@ class RingBuffer
         size_t insertPos;
         size_t readPos;
         size_t count;
+
+        mutable std::mutex mtx;
 
     public:    
         RingBuffer(int size);
