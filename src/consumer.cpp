@@ -35,6 +35,56 @@ void consume(RingBuffer* buffer, PlaybackState* state){
 
     // Start playback
     IAudioClient* audioClient = context.audioClient; 
+
+    // get access to the speaker/headphone buffer
+    IAudioRenderClient* renderClient = context.renderClient;
+
+    // --------------- Wait for initial Data ----------------// 
+    
+    size_t initialSamples = context.bufferFrames * constants::CHANNELS;
+    
+    while (buffer->getAvailableSamples() < initialSamples &&
+    !state->finished)
+    {
+        std::cout << "---> CONSUMER: " << "Not enough samples in buffer, waiting for samples..."<< std::endl;
+        
+        std::this_thread::sleep_for(
+            std::chrono::milliseconds(1)
+        );
+    }
+    
+    // --------------- Prefill WASAPI buffer ----------------// 
+    
+    BYTE* data = nullptr;
+    hr = renderClient->GetBuffer(
+        context.bufferFrames,
+        &data
+    );
+    
+    if (FAILED(hr))
+    {
+        std::cerr << "Initial GetBuffer failed\n";
+        return;
+    }
+    
+    buffer->pop(
+        reinterpret_cast<float*>(data),
+        initialSamples
+    );
+    
+    hr = renderClient->ReleaseBuffer(
+        context.bufferFrames,
+        0
+    );
+    
+    if (FAILED(hr))
+    {
+        std::cerr << "Initial ReleaseBuffer failed\n";
+        return;
+    }
+    
+    // --------------- Start Playback ----------------// 
+
     hr = audioClient->Start();
     
     if (FAILED(hr))
@@ -70,8 +120,6 @@ void consume(RingBuffer* buffer, PlaybackState* state){
             continue;
         }
 
-        // get access to the speaker/headphone buffer
-        IAudioRenderClient* renderClient = context.renderClient;
         BYTE* data = nullptr;
         hr = renderClient->GetBuffer(available, &data);
         
