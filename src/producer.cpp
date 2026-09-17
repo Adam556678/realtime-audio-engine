@@ -15,7 +15,7 @@ void producer(
         float bucket[constants::BUCKET_SIZE]; // A temporary buffer for chunk decoding
 
         // Streaming loop
-        while (true)
+        while (!state->stopRequested)
         {
             drmp3_uint64 framesDecoded =  
                 decoder->decodeMp3Chunk(

@@ -30,6 +30,7 @@ void consume(RingBuffer* buffer, PlaybackState* state){
     if (FAILED(hr))
     {
         std::cerr << "WASAPI configuration failed\n";
+        state->stopRequested = true;
         return ;
     }
 
@@ -64,6 +65,7 @@ void consume(RingBuffer* buffer, PlaybackState* state){
     if (FAILED(hr))
     {
         std::cerr << "Initial GetBuffer failed\n";
+        state->stopRequested = true;
         return;
     }
     
@@ -80,6 +82,7 @@ void consume(RingBuffer* buffer, PlaybackState* state){
     if (FAILED(hr))
     {
         std::cerr << "Initial ReleaseBuffer failed\n";
+        state->stopRequested = true;
         return;
     }
     
@@ -90,6 +93,7 @@ void consume(RingBuffer* buffer, PlaybackState* state){
     if (FAILED(hr))
     {
         std::cerr << "audio client start failed\n";
+        state->stopRequested = true;
         return ;
     }
     
@@ -111,6 +115,7 @@ void consume(RingBuffer* buffer, PlaybackState* state){
         if (FAILED(hr))
         {
             std::cerr << "Getting buffer's padding failed\n";
+            state->stopRequested = true;
             return ;
         }
         
@@ -126,6 +131,7 @@ void consume(RingBuffer* buffer, PlaybackState* state){
         if (FAILED(hr))
         {
             std::cerr << "Accessing to output's buffer failed\n";
+            state->stopRequested = true;
             return ;
         }
 
