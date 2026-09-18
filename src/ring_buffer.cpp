@@ -40,7 +40,7 @@ bool RingBuffer::pop(float* output, size_t samples)
 {
     std::lock_guard<std::mutex> lock(mtx); 
 
-    if (empty() || samples > count)
+    if (samples > count)
     return false;
     
     for (size_t i = 0; i < samples; i++)
@@ -56,13 +56,13 @@ bool RingBuffer::pop(float* output, size_t samples)
 
 bool RingBuffer::empty() const
 {
-    std::lock_guard<std::mutex> lock(mtx); 
+    // std::lock_guard<std::mutex> lock(mtx); 
     return count == 0;
 }
 
 bool RingBuffer::full() const
 {
-    std::lock_guard<std::mutex> lock(mtx); 
+    // std::lock_guard<std::mutex> lock(mtx); 
     return count == size;
 }
 

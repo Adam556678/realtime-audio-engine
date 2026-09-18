@@ -33,18 +33,12 @@ int main(){
         &state
     );
 
-    std::cerr << "[MAIN] Before creating consumer thread\n";
+    std::thread consumerThread(
+        consume,
+        &buffer,
+        &state
+    );
 
-    std::thread consumerThread([&]() {
-        std::cerr << "[CONSUMER] Lambda thread started\n";
-
-        consume(
-            &buffer,
-            &state
-        );
-    });
-
-    std::cerr << "[MAIN] After creating consumer thread\n";
     producerThread.join();
     consumerThread.join();
     

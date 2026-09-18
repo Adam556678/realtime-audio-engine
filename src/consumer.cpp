@@ -28,9 +28,6 @@ HRESULT config_wasapi(WasapiContext &context){
         std::cerr <<"CoInitialize failed\n";
         return hr;
     }
-
-    ///// DEBUG
-    std::cout << "CoInitialize succeded" << std::endl;
     
     IMMDeviceEnumerator* enumerator = nullptr;
     
@@ -48,9 +45,6 @@ HRESULT config_wasapi(WasapiContext &context){
         return hr;
     }
 
-    ///// DEBUG
-    std::cout << "CoCreateInstance succeded" << std::endl;
-    
     IMMDevice* device = nullptr;
     
     // Get the default output device
@@ -65,9 +59,6 @@ HRESULT config_wasapi(WasapiContext &context){
         return hr;
     }
 
-    ///// DEBUG
-    std::cout << "Enumerator succeded" << std::endl;
-    
     enumerator->Release();
     
     IAudioClient* audioClient = nullptr;
@@ -82,9 +73,6 @@ HRESULT config_wasapi(WasapiContext &context){
         std::cerr <<"Activate failed\n";
         return hr;
     }
-
-    ///// DEBUG
-    std::cout << "Activation succeded" << std::endl;
 
     device->Release();
     
@@ -132,10 +120,6 @@ HRESULT config_wasapi(WasapiContext &context){
         return hr;
     }
 
-    ///// DEBUG
-    std::cout << "Setting event handle succeded" << std::endl;
-
-
     // We don't need the format structure anymore.
     CoTaskMemFree(format);
 
@@ -154,9 +138,6 @@ HRESULT config_wasapi(WasapiContext &context){
         return hr;
     }
 
-    ///// DEBUG
-    std::cout << "Getting Service succeded" << std::endl;
-
 
     UINT32 bufferFrames = 0;
     hr = audioClient->GetBufferSize(&bufferFrames);
@@ -166,10 +147,6 @@ HRESULT config_wasapi(WasapiContext &context){
         std::cerr << "GetBufferSize failed\n";
         return hr;
     }
-
-    ///// DEBUG
-    std::cout << "WASAPI config succeded" << std::endl;
-
 
     // Assign values to context
     context.audioClient = audioClient;
@@ -183,10 +160,10 @@ HRESULT config_wasapi(WasapiContext &context){
 
 void consume(RingBuffer* buffer, PlaybackState* state){
     HRESULT hr;
-
-    ///// DEBUG
-    std::cout << "Start consuming....." << std::endl;
    
+    ///// DEBUG
+    std::cout << "Start consuming...\n";
+
     // Configure WASAPI
     WasapiContext context = WasapiContext();
     hr = config_wasapi(context);
@@ -233,10 +210,19 @@ void consume(RingBuffer* buffer, PlaybackState* state){
         return;
     }
     
-    buffer->pop(
+    ////// DEBUG
+    std::cout << "--> CONSUMER : Before prefilling WASAPI buffer" << std::endl;
+    
+    if (!buffer->pop(
         reinterpret_cast<float*>(data),
         initialSamples
-    );
+    )){
+        std::cerr << "--> CONSUMER : prefilling WASAPI buffer failed.\n";
+        return ;
+    }
+
+    ////// DEBUG
+    std::cout << "--> CONSUMER : Initial samples filled" << std::endl;
     
     hr = renderClient->ReleaseBuffer(
         context.bufferFrames,
@@ -251,7 +237,7 @@ void consume(RingBuffer* buffer, PlaybackState* state){
     }
     
     // --------------- Start Playback ----------------// 
-
+    
     hr = audioClient->Start();
     
     if (FAILED(hr))
@@ -264,13 +250,16 @@ void consume(RingBuffer* buffer, PlaybackState* state){
     // Play....
     while (!state->finished || !buffer->empty())
     {
-
+        
         // Pause this thread untill event fires
         // Wake this thread when there's free space in the buffer
         WaitForSingleObject(
             context.event, // Event to wait for
             INFINITE // wait forever
         );
+        
+        ////// DEBUG
+        std::cout << "--> CONSUMER : Playing......" << std::endl;
 
         // get current padding in the buffer
         UINT32 padding;
