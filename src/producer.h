@@ -3,7 +3,7 @@
 
 #include "decoder.h"
 #include "ring_buffer.h"
-#include "include/PlaybackState.h"
+#include "../include/PlaybackState.h"
 
 void producer(
     Decoder* decoder, 
