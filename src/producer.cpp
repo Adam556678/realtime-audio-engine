@@ -19,12 +19,12 @@ void producer(
         {
             uint64_t framesDecoded;
 
-            if (state->audioExtension == 0){ // MP3
+            if (state->audioExtension == MP3){
                 framesDecoded = decoder->decodeMp3Chunk(
                     bucket, 
                     constants::BUCKET_SIZE / constants::CHANNELS
                 );  
-            }else if (state->audioExtension == 1){ // WAV
+            }else if (state->audioExtension == WAV){
                 framesDecoded = decoder->decodeWAVChunk(
                     bucket, 
                     constants::BUCKET_SIZE / constants::CHANNELS

@@ -30,8 +30,6 @@ float *Decoder::decodeMp3(const char* filePath)
         throw std::runtime_error("Failed to decode MP3 file.");
     }
 
-    this->audioData = AudioData(config.channels, config.sampleRate, totalFrameCount);
-
     return pcm;
 }
 
@@ -42,13 +40,6 @@ float *Decoder::decodeWAV(const char* filePath)
     if (!drwav_init_file(&wav, filePath, NULL)){
         throw std::runtime_error("Failed to decode WAV file.");
     }
-
-    // Assign metadata
-    this->audioData = AudioData(
-        wav.channels,
-        wav.sampleRate,
-        wav.totalPCMFrameCount
-    );
 
     // Allocate PCM buffer
     float* pcm = new float[wav.totalPCMFrameCount * wav.channels];
@@ -93,6 +84,14 @@ bool Decoder::openMp3(const char *path)
 {
     if (!drmp3_init_file(&mp3, path, NULL))
         return false;
+
+    // Assign metadata
+    this->audioData = AudioData(
+        mp3.channels,
+        mp3.sampleRate,
+        mp3.totalPCMFrameCount,
+        MP3
+    );
     
     return true;
 }
@@ -102,10 +101,23 @@ bool Decoder::openWAV(const char *path)
     if (!drwav_init_file(&wav, path, NULL))
         return false;
 
+    // Assign metadata
+    this->audioData = AudioData(
+        wav.channels,
+        wav.sampleRate,
+        wav.totalPCMFrameCount,
+        WAV
+    );
+
     return true;
 }
 
 void Decoder::close()
 {
-    drmp3_uninit(&mp3);
+    if (this->audioData.audioExtension == MP3){
+        drmp3_uninit(&mp3);
+    }else if (this->audioData.audioExtension == WAV){
+        drwav_uninit(&wav);
+    }
+    
 }

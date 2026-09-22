@@ -1,6 +1,7 @@
 #include "consumer.h"
 #include "constants.h"
 #include "../include/PlaybackState.h"
+#include "../include/AudioData.h"
 
 #include <algorithm>
 #include <thread>
@@ -21,7 +22,7 @@ struct WasapiContext {
 };
 
 
-HRESULT config_wasapi(WasapiContext &context){
+HRESULT config_wasapi(WasapiContext &context, AudioData audioData){
      HRESULT hr = CoInitialize(nullptr);
 
     if (FAILED(hr)){
@@ -79,8 +80,20 @@ HRESULT config_wasapi(WasapiContext &context){
     // hnsBufferDuration = 1 second; // Create a buffer that can hold 1 second of sound.
 
     // get device's preferred format
-    WAVEFORMATEX* format = nullptr;
-    audioClient->GetMixFormat(&format);
+    // WAVEFORMATEX* format = nullptr;
+    // audioClient->GetMixFormat(&format);
+
+    WAVEFORMATEX fileFormat {};
+
+    fileFormat.wFormatTag = WAVE_FORMAT_IEEE_FLOAT;
+    fileFormat.nChannels = audioData.channels;
+    fileFormat.nSamplesPerSec = audioData.sampleRate;
+    fileFormat.wBitsPerSample = 32;
+    fileFormat.nBlockAlign =
+        fileFormat.nChannels * sizeof(float);
+    fileFormat.nAvgBytesPerSec =
+        fileFormat.nSamplesPerSec * fileFormat.nBlockAlign;
+    fileFormat.cbSize = 0;
 
     // Create windows event object
     HANDLE event = CreateEvent(
@@ -90,19 +103,22 @@ HRESULT config_wasapi(WasapiContext &context){
         nullptr // Event name
     );
 
+    DWORD flags = AUDCLNT_STREAMFLAGS_EVENTCALLBACK | //Notify me whenever you need more audio
+    AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM |
+    AUDCLNT_STREAMFLAGS_SRC_DEFAULT_QUALITY; // Window's sample rate conversion
+
     hr = audioClient->Initialize(
         AUDCLNT_SHAREMODE_SHARED, // mix all sounds together
-        AUDCLNT_STREAMFLAGS_EVENTCALLBACK, //Notify me whenever you need more audio
+        flags, 
         200000, // the amount of time the buffer should be able to hold (20ms).
         0, // Only important in Exclusive Mode
-        format,
+        &fileFormat,
         nullptr
     );
 
     if (FAILED(hr))
     {
         std::cerr << "Initialize failed\n";
-        CoTaskMemFree(format);
         audioClient->Release();
         CoUninitialize();
         return hr;
@@ -114,14 +130,12 @@ HRESULT config_wasapi(WasapiContext &context){
     if (FAILED(hr))
     {
         std::cerr << "Setting event handle failed\n";
-        CoTaskMemFree(format);
         audioClient->Release();
         CoUninitialize();
         return hr;
     }
 
     // We don't need the format structure anymore.
-    CoTaskMemFree(format);
 
     IAudioRenderClient* renderClient = nullptr;
 
@@ -158,7 +172,7 @@ HRESULT config_wasapi(WasapiContext &context){
 }
 
 
-void consume(RingBuffer* buffer, PlaybackState* state){
+void consume(RingBuffer* buffer, PlaybackState* state, AudioData audioData){
     HRESULT hr;
    
     ///// DEBUG
@@ -166,7 +180,7 @@ void consume(RingBuffer* buffer, PlaybackState* state){
 
     // Configure WASAPI
     WasapiContext context = WasapiContext();
-    hr = config_wasapi(context);
+    hr = config_wasapi(context, audioData);
     
     if (FAILED(hr))
     {
@@ -183,7 +197,7 @@ void consume(RingBuffer* buffer, PlaybackState* state){
 
     // --------------- Wait for initial Data ----------------// 
     
-    size_t initialSamples = context.bufferFrames * constants::CHANNELS;
+    size_t initialSamples = context.bufferFrames * audioData.channels;
     
     while (buffer->getAvailableSamples() < initialSamples &&
     !state->finished)
@@ -290,7 +304,7 @@ void consume(RingBuffer* buffer, PlaybackState* state){
 
         // get the number of samples needed
         size_t samplesNeeded = 
-            available * constants::CHANNELS;
+            available * audioData.channels;
         
         // get the number of available samples in the ring buffer
         size_t availableSamples = 

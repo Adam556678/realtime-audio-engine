@@ -30,12 +30,12 @@ int main(){
     RingBuffer buffer(constants::BUFFER_FRAMES * constants::CHANNELS); // Circular buffer
     
     // Open audio file
-    if (ext == 0){ //Mp3
+    if (ext == MP3){
         if (!decoder.openMp3(filePath.c_str())){
             std::cerr << "Failed to open file";
             return 1;
         }
-    } else if (ext == 1){ //WAV
+    } else if (ext == WAV){
         if (!decoder.openWAV(filePath.c_str())){
             std::cerr << "Failed to open file";
             return 1;
@@ -62,7 +62,8 @@ int main(){
     std::thread consumerThread(
         consume,
         &buffer,
-        &state
+        &state,
+        decoder.getAudioData()
     );
 
     producerThread.join();
