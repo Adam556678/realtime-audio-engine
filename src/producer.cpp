@@ -17,11 +17,19 @@ void producer(
         // Streaming loop
         while (!state->stopRequested)
         {
-            drmp3_uint64 framesDecoded =  
-                decoder->decodeMp3Chunk(
+            uint64_t framesDecoded;
+
+            if (state->audioExtension == 0){ // MP3
+                framesDecoded = decoder->decodeMp3Chunk(
                     bucket, 
                     constants::BUCKET_SIZE / constants::CHANNELS
-                );
+                );  
+            }else if (state->audioExtension == 1){ // WAV
+                framesDecoded = decoder->decodeWAVChunk(
+                    bucket, 
+                    constants::BUCKET_SIZE / constants::CHANNELS
+                );  
+            }   
 
             // DEBUG
             std::cout << "---> BUCKET: " << framesDecoded * constants::CHANNELS << " samples filled" << std::endl;

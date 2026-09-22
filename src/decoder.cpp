@@ -98,7 +98,7 @@ bool Decoder::openMp3(const char *path)
 }
 
 bool Decoder::openWAV(const char *path)
-{
+{   
     if (!drwav_init_file(&wav, path, NULL))
         return false;
 

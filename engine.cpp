@@ -5,6 +5,9 @@
 #include "src/ring_buffer.h"
 #include "src/producer.h"
 #include "src/consumer.h"
+#include "include/file_dialog.h"
+#include "include/extensions.h"
+#include "include/helpers.h"
 #include <string>
 #include <thread>
 #include <iostream>
@@ -12,19 +15,42 @@
 int main(){
 
     Decoder decoder;
-    std::string filePath = "F:/coding/Low Level System Engineering/--------- Final Projects ---------/Audio Engine/realtime-audio-engine/audio.mp3";
+
+    // Open file dialog to pick an audio file
+    std::string filePath = openFileDialog();
+    
+    if (filePath.empty()) {
+        std::cout << "No file was selected.\n";
+        return 1;
+    }
+
+    // Capture file's extension
+    Extension ext = Helpers::getExtension(filePath);
 
     RingBuffer buffer(constants::BUFFER_FRAMES * constants::CHANNELS); // Circular buffer
     
     // Open audio file
-    if (!decoder.openMp3(filePath.c_str())){
-        std::cerr << "Failed to open file";
+    if (ext == 0){ //Mp3
+        if (!decoder.openMp3(filePath.c_str())){
+            std::cerr << "Failed to open file";
+            return 1;
+        }
+    } else if (ext == 1){ //WAV
+        if (!decoder.openWAV(filePath.c_str())){
+            std::cerr << "Failed to open file";
+            return 1;
+        }
+    }else
+    {
+        std::cerr << "Uknown file extension";
         return 1;
     }
+    
     
 
     // Create a shared playback state between producer & consumer
     PlaybackState state;
+    state.audioExtension = ext;
 
     std::thread producerThread(
         producer,
