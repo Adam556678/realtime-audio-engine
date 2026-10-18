@@ -1,23 +1,21 @@
+#define NOMINMAX
 #include "consumer.h"
-#include "constants.h"
 #include "../include/PlaybackState.h"
 #include "../include/AudioData.h"
 
 #include <algorithm>
 #include <thread>
 #include <iostream>
-#define NOMINMAX
 #include <windows.h>
 #include <mmdeviceapi.h>
 #include <audioclient.h>
 #include <audiopolicy.h>
-#include <functiondiscoverykeys_devpkey.h>
 #include <combaseapi.h>
 
 struct WasapiContext {
     IAudioClient* audioClient;
     IAudioRenderClient* renderClient;
-    UINT32 bufferFrames;
+    UINT32 bufferFrames; // Capacity of WASAPI buffer
     HANDLE event;
 };
 
@@ -99,7 +97,7 @@ HRESULT config_wasapi(WasapiContext &context, AudioData audioData){
     HANDLE event = CreateEvent(
         nullptr, // who is allowed to access the event (default security)
         FALSE, // Auto reset event
-        FALSE,
+        FALSE, // Initial state, start event as non-signaled
         nullptr // Event name
     );
 
@@ -276,6 +274,7 @@ void consume(RingBuffer* buffer, PlaybackState* state, AudioData audioData){
         std::cout << "--> CONSUMER : Playing......" << std::endl;
 
         // get current padding in the buffer
+        // padding is the number of frames queued and waiting to be played
         UINT32 padding;
         hr = audioClient->GetCurrentPadding(&padding);
 
@@ -302,7 +301,7 @@ void consume(RingBuffer* buffer, PlaybackState* state, AudioData audioData){
             return ;
         }
 
-        // get the number of samples needed
+        // samples needed by the output's buffer 
         size_t samplesNeeded = 
             available * audioData.channels;
         

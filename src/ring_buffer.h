@@ -20,7 +20,7 @@ class RingBuffer
 
         mutable std::mutex mtx;
 
-    public:    
+    public:
         RingBuffer(int size);
 
         bool push(const float* input, size_t samples);

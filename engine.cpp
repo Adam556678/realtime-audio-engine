@@ -1,7 +1,7 @@
-#include "include/dr_mp3.h"
 #include "src/decoder.h"
 #include "src/constants.h"
 #include "include/PlaybackState.h"
+#include "src/keyboard_inp_controller.h"
 #include "src/ring_buffer.h"
 #include "src/producer.h"
 #include "src/consumer.h"
@@ -52,6 +52,19 @@ int main(){
     PlaybackState state;
     state.audioExtension = ext;
 
+    state.controlEvent = CreateEvent(
+        nullptr,
+        FALSE,
+        FALSE,
+        nullptr
+    );
+
+    if (state.controlEvent == nullptr)
+    {
+        std::cerr << "Failed to create control event\n";
+        return 1;
+    }
+
     std::thread producerThread(
         producer,
         &decoder,
@@ -66,8 +79,14 @@ int main(){
         decoder.getAudioData()
     );
 
+    std::thread keyboardThread(
+        handleKeyboard,
+        &state
+    );
+
     producerThread.join();
     consumerThread.join();
+    keyboardThread.join();
     
     decoder.close();
 
