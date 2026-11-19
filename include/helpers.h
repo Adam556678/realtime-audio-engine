@@ -21,6 +21,17 @@ namespace Helpers{
         }
         return UNKNOWN;
     }
+
+    std::string getSongTitle(std::string filepath){
+        std::regex titleRegex(R"([^/\\]+(?=\.[^.]+$))");
+        std::smatch match;
+
+        if (std::regex_search(filepath, match, titleRegex)) {
+            return match[0].str();
+        }
+
+        return "";
+    }
 }
 
 #endif

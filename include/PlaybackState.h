@@ -13,6 +13,7 @@ struct PlaybackState
     std::atomic<bool> stopRequested{false}; // Consumer stopped requesting samples
     Extension audioExtension;
     HANDLE controlEvent = nullptr;
+    std::string songTitle;
 };
 
 #endif
