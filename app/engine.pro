@@ -8,15 +8,22 @@ CONFIG += c++17
 
 SOURCES += \
     main.cpp \
-    mainwindow.cpp
+    mainwindow.cpp \
+    welcomewindow.cpp
 
 HEADERS += \
-    mainwindow.h
+    ClickableWidget.h \
+    mainwindow.h \
+    welcomewindow.h
 
 FORMS += \
-    mainwindow.ui
+    mainwindow.ui \
+    welcomewindow.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
+
+RESOURCES += \
+    resource.qrc
