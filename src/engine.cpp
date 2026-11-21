@@ -5,7 +5,11 @@
 #include "../include/file_dialog.h"
 #include "../include/extensions.h"
 #include "../include/helpers.h"
+#include "producer.h"
+#include "consumer.h"
 #include "constants.h"
+
+#include <thread>
 
 Engine::Engine()
     :buffer(constants::BUFFER_FRAMES * constants::CHANNELS){
@@ -46,10 +50,29 @@ bool Engine::pickSong(){
 }
 
 void Engine::process(){
-    
+    // std::thread producerThread(
+    //     producer,
+    //     &decoder,
+    //     &buffer,
+    //     &playbackState
+    // );
 }
 
-void Engine::play(){}
+void Engine::play(){
+    std::thread producerThread(
+        producer,
+        &decoder,
+        &buffer,
+        &playbackState
+    );
+
+    std::thread consumerThread(
+        consume,
+        &buffer,
+        &playbackState,
+        decoder.getAudioData()
+    );
+}
 
 void Engine::pause(){}
 

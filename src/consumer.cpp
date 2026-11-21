@@ -441,7 +441,30 @@ void consume(RingBuffer* buffer, PlaybackState* state, AudioData audioData){
         // While paused, wait ONLY for a control event.
         if (audioPaused)
         {
-            
+            DWORD result = WaitForSingleObject(
+                state->controlEvent,
+                INFINITE
+            );
+
+            if (result != WAIT_OBJECT_0){ // Error
+                state->stopRequested = true;
+                break;
+            }
+
+            if (state->paused){ // audio still paused
+                continue;
+            }
+
+            // Resume playback
+            hr = audioClient->Start();
+
+            if (FAILED(hr)){
+                state->stopRequested = true;
+                break;
+            }
+
+            audioPaused = false;
+            continue;
         }
         
         DWORD result = WaitForMultipleObjects(
@@ -530,12 +553,6 @@ void consume(RingBuffer* buffer, PlaybackState* state, AudioData audioData){
             // Commit the complete WASAPI buffer
             renderClient->ReleaseBuffer(available, 0);
         }
-        else
-        {
-            // Handle wait failure.
-        }
-        
-
     }
     
 }
